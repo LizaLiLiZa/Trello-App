@@ -186,3 +186,7 @@ class PersonPasswordRequest(BaseModel):
         if ValidateInfo.validate_password(value):
             return value
         raise HTTPException(status_code=422, detail="Неверный формат нового пароля.")
+
+class JWTSchema(BaseModel):
+    access_token: str
+    token_type: str

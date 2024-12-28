@@ -18,5 +18,6 @@ class UpdateProjectRequest(BaseModel):
     """
 
     id: int
+    id_person: int
     name: str
     description: Optional[str] = None

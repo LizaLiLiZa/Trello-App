@@ -75,3 +75,5 @@ archive.zip
 # macOS
 .DS_Store
 .env
+
+/secret

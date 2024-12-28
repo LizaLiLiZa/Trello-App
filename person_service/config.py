@@ -1,5 +1,13 @@
-from pydantic import IPvAnyAddress, PostgresDsn, EmailStr
+import os
+from pathlib import Path
+from pydantic import IPvAnyAddress, PostgresDsn, EmailStr, BaseModel
 from pydantic_settings import BaseSettings
+
+class AuthJWT(BaseModel):
+    private_key_path: Path = Path("core/services/auth/secret/jwt-private.pem")
+    public_key_path: Path = Path("core/services/auth/secret/jwt-public.pem")
+    algorithm: str = "RS256"
+    access_token_expire_minutes: int = 95
 
 
 class Settings(BaseSettings):
@@ -13,10 +21,11 @@ class Settings(BaseSettings):
     system_email: EmailStr = '9788831467@mail.ru'
     domain: str
     static_url: str = ""
+    auth_jwt: AuthJWT = AuthJWT()
 
+    
     class Config:
         env_file = '.env'
-
 
 
 Config = Settings()

@@ -6,16 +6,29 @@ from .base import BaseStorage
 from ..models.tasks.requests import TaskTextRequest
 from ..models.tasks.requests import TaskDateRequest
 from ..models.tasks.requests import TaskPersonRequest
+from ..models.tasks.requests import TaskMeanRequest
+from ..models.tasks.requests import TaskMeanUpdateRequest
 
 from ..models.tasks.responses import TaskTextResponse
 from ..models.tasks.responses import TaskMeanTextResponse
 from ..models.tasks.responses import TaskTextCategoriesResponse
-
+from ..models.tasks.responses import TaskMeanResponse
+from ..models.tasks.responses import TaskDateCategoriesResponse
+from ..models.tasks.responses import TaskMeanDateResponse
+from ..models.tasks.responses import TaskPersonCategoriesResponse
+from ..models.tasks.responses import TaskMeanPersonResponse
 
 class TaskMeanStorage(BaseStorage):
     async def get_task_mean_text(self, id_task: int) -> TaskMeanTextResponse:
         stmt = text("""
-            select * from tasks_means
+            select 
+                tasks_means.id as mean_id,
+                tasks_means.id_task_categories as mean_task_categories_id,
+                tasks_text.id as text_id,
+                tasks_categories.id as category_id,
+                tasks_text.text as text_content,
+                tasks_categories.name as category_name
+            from tasks_means
             join tasks_text on tasks_means.id_mean = tasks_text.id
             join tasks_categories on tasks_categories.id = tasks_means.id_task_categories
             where tasks_means.id_task = :id_task
@@ -26,18 +39,142 @@ class TaskMeanStorage(BaseStorage):
         async with self.get_session() as session:
             session: AsyncSession
             data_ = (await session.execute(stmt, params)).fetchall()
+
             return TaskMeanTextResponse(
                 id_task=id_task,
-                data=[TaskTextCategoriesResponse(
-                    id=i.tasks_means.id,
-                    id_text=i.tasks_text.id,
-                    id_task_categories=i.tasks_categories.id,
-                    text_=i.tasks_text.text,
-                    name=i.tasks_categories.name
-                )
+                data=[
+                    TaskTextCategoriesResponse(
+                        id=i.mean_id,
+                        id_text=i.text_id,
+                        id_task_categories=i.category_id,
+                        text_=i.text_content,
+                        name=i.category_name
+                    )
                     for i in data_
                 ]
             )
+
+    async def get_task_mean_date(self, id_task: int) -> TaskMeanTextResponse:
+        stmt = text("""
+            select 
+                tasks_means.id as mean_id,
+                tasks_means.id_task_categories as mean_task_categories_id,
+                tasks_date.id as date_id,
+                tasks_categories.id as category_id,
+                tasks_date.date as date_content,
+                tasks_categories.name as category_name
+            from tasks_means
+            join tasks_date on tasks_means.id_mean = tasks_date.id
+            join tasks_categories on tasks_categories.id = tasks_means.id_task_categories
+            where tasks_means.id_task = :id_task
+        """)
+
+        params = {"id_task": id_task}
+
+        async with self.get_session() as session:
+            session: AsyncSession
+            data_ = (await session.execute(stmt, params)).fetchall()
+
+            return TaskMeanDateResponse(
+                id_task=id_task,
+                data=[
+                    TaskDateCategoriesResponse(
+                        id=i.mean_id,
+                        id_date=i.date_id,
+                        id_task_categories=i.category_id,
+                        date_=i.date_content,
+                        name=i.category_name
+                    )
+                    for i in data_
+                ]
+            )
+
+    async def get_task_mean_person(self, id_task: int) -> TaskPersonCategoriesResponse:
+        stmt = text("""
+            select 
+                tasks_means.id as mean_id,
+                tasks_means.id_task_categories as mean_task_categories_id,
+                tasks_person.id as person_id,
+                tasks_categories.id as category_id,
+                tasks_person.id_person as person_content,
+                tasks_categories.name as category_name
+            from tasks_means
+            join tasks_person on tasks_means.id_mean = tasks_person.id
+            join tasks_categories on tasks_categories.id = tasks_means.id_task_categories
+            where tasks_means.id_task = :id_task
+        """)
+
+        params = {"id_task": id_task}
+
+        async with self.get_session() as session:
+            session: AsyncSession
+            data_ = (await session.execute(stmt, params)).fetchall()
+
+            return TaskMeanPersonResponse(
+                id_task=id_task,
+                data=[
+                    TaskPersonCategoriesResponse(
+                        id=i.mean_id,
+                        id_person=i.person_id,
+                        id_task_categories=i.category_id,
+                        person_=i.person_content,
+                        name=i.category_name
+                    )
+                    for i in data_
+                ]
+            )
+
+    async def create_task_mean(self, task_mean: TaskMeanRequest) -> int:
+        stmt = text("""
+            insert into tasks_means (id_task_categories, id_mean, id_task)
+            values(:id_task_categories, :id_mean, :id_task)
+            returning id
+        """)
+
+        params = task_mean.model_dump(mode="python")
+
+        async with self.get_session() as session:
+            session: AsyncSession
+            data = (await session.execute(stmt, params)).fetchone()
+            await session.commit()
+            return data.id
+
+    async def update_task_mean(self, task_mean: TaskMeanUpdateRequest) -> TaskMeanResponse:
+        stmt = text("""
+            update from tasks_mean set id_mean = :id_mean
+            where id = :id
+        """)
+
+        stmt_select = text("""
+            select * from tasks_mean where id = :id
+        """)
+
+        params = task_mean.model_dump(mode="python")
+
+        async with self.get_session() as session:
+            session: AsyncSession
+            await session.execute(stmt, params)
+            await session.commit()
+            data = (await session.execute(stmt_select, params)).fetchone()
+            return TaskMeanResponse(
+                id = data.id,
+                id_task=data.id_task,
+                id_mean=data.id_mean,
+                id_task_categories=data.id_task_categories
+            )
+
+    async def delete_task_mean(self, id_: int) -> bool:
+        stmt = text("""
+            delete from tasks_mean where id = :id
+        """)
+
+        params = {"id": id_}
+
+        async with self.get_session() as session:
+            session: AsyncSession
+            await session.execute(stmt, params)
+            await session.commit()
+            return True
 
     async def get_text(self, id_task_categories: int) -> list[TaskTextResponse]:
         stmt_text = text("""

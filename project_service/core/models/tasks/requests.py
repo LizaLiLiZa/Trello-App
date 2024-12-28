@@ -7,7 +7,7 @@ class TaskRequest(BaseModel):
     id_state: int
     id_low_task: Optional[int] = None
     name: str
-    description: str
+    description: Optional[str] = None
     date_created: datetime.datetime
 
 class TaskCategoriesRequest(BaseModel):
@@ -31,3 +31,7 @@ class TaskMeanRequest(BaseModel):
     id_task_categories: int
     id_mean: int
     id_task: int
+
+class TaskMeanUpdateRequest(BaseModel):
+    id: int
+    id_mean: int

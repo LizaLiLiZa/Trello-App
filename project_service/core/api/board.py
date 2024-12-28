@@ -4,6 +4,9 @@ from ..storage import board_storage
 from ..models.boards.requests import BoardRequest
 from ..models.boards.responses import BoardResponse
 
+from ..service.auth.valid_token import valid_token_person
+from ..service.auth.valid_token import valid_token_person_project
+
 router = APIRouter(tags=["Board"])
 
 @router.get("/boards")

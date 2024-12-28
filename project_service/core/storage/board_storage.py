@@ -1,4 +1,5 @@
 from sqlalchemy import text
+from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from .base import BaseStorage
 from ..models.boards.requests import BoardRequest
@@ -14,6 +15,8 @@ class BoardStorage(BaseStorage):
         async with self.get_session() as session:
             session:AsyncSession
             data = (await session.execute(stmt, params)).fetchone()
+            if data is None:
+                raise HTTPException(status_code=422, detail="Нет такой доски!")
             return BoardResponse(
                 id=data.id,
                 id_project=data.id_project,

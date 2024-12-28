@@ -1,9 +1,10 @@
 from datetime import datetime, timezone
-
+# import asyncio
 import uvicorn
 from fastapi import FastAPI
 from loguru import logger
 from starlette.middleware.cors import CORSMiddleware
+# from rabbitmq import listen_for_messages
 
 from config import Config
 
@@ -27,10 +28,10 @@ app.add_middleware(
 
 app.include_router(api_router)
 
-
 @app.on_event('startup')
 async def on_startup():
     logger.success('Application startup complete at {time}', time=datetime.now(tz=timezone.utc))
+    # asyncio.create_task(listen_for_messages())
 
 if __name__ == '__main__':
     uvicorn.run('main:app', host=str(Config.host), port=Config.port, reload=True)
